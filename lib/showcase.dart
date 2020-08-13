@@ -1,7 +1,34 @@
+/*
+ * Copyright © 2020, Simform Solutions
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:showcaseview/showcaseview.dart';
 import 'package:showcaseview/custom_paint.dart';
+import 'package:showcaseview/showcaseview.dart';
+
 import 'get_position.dart';
 import 'layout_overlays.dart';
 import 'tooltip_widget.dart';
@@ -13,6 +40,7 @@ class Showcase extends StatefulWidget {
   final ShapeBorder shapeBorder;
   final TextStyle titleTextStyle;
   final TextStyle descTextStyle;
+  final EdgeInsets contentPadding;
   final GlobalKey key;
   final Color overlayColor;
   final double overlayOpacity;
@@ -27,6 +55,7 @@ class Showcase extends StatefulWidget {
   final VoidCallback onTargetClick;
   final bool disposeOnTap;
   final EdgeInsets spotlightPadding;
+  final bool disableAnimation;
 
   const Showcase(
       {@required this.key,
@@ -44,7 +73,9 @@ class Showcase extends StatefulWidget {
       this.onTargetClick,
       this.disposeOnTap,
       this.spotlightPadding = const EdgeInsets.all(0.0),
-      this.animationDuration = const Duration(milliseconds: 2000)})
+      this.animationDuration = const Duration(milliseconds: 2000),
+      this.disableAnimation = false,
+      this.contentPadding = const EdgeInsets.symmetric(vertical: 8)})
       : height = null,
         width = null,
         container = null,
@@ -57,10 +88,10 @@ class Showcase extends StatefulWidget {
                 : (disposeOnTap == null ? false : true),
             "disposeOnTap is required if you're using onTargetClick"),
         assert(
-        disposeOnTap == null
-            ? true
-            : (onTargetClick == null ? false : true),
-        "onTargetClick is required if you're using disposeOnTap"),
+            disposeOnTap == null
+                ? true
+                : (onTargetClick == null ? false : true),
+            "onTargetClick is required if you're using disposeOnTap"),
         assert(key != null ||
             child != null ||
             title != null ||
@@ -93,7 +124,9 @@ class Showcase extends StatefulWidget {
       this.onTargetClick,
       this.disposeOnTap,
       this.spotlightPadding,
-      this.animationDuration = const Duration(milliseconds: 2000)})
+      this.animationDuration = const Duration(milliseconds: 2000),
+      this.disableAnimation = false,
+      this.contentPadding = const EdgeInsets.symmetric(vertical: 8)})
       : this.showArrow = false,
         this.onToolTipClick = null,
         assert(overlayOpacity >= 0.0 && overlayOpacity <= 1.0,
@@ -134,7 +167,9 @@ class _ShowcaseState extends State<Showcase> with TickerProviderStateMixin {
           _slideAnimationController.reverse();
         }
         if (_slideAnimationController.isDismissed) {
-          _slideAnimationController.forward();
+          if (!widget.disableAnimation) {
+            _slideAnimationController.forward();
+          }
         }
       });
 
@@ -168,7 +203,9 @@ class _ShowcaseState extends State<Showcase> with TickerProviderStateMixin {
     });
 
     if (activeStep == widget.key) {
-      _slideAnimationController.forward();
+      if (!widget.disableAnimation) {
+        _slideAnimationController.forward();
+      }
     }
   }
 
@@ -185,17 +222,19 @@ class _ShowcaseState extends State<Showcase> with TickerProviderStateMixin {
 
   _nextIfAny() {
     ShowCaseWidget.of(context).completed(widget.key);
-    _slideAnimationController.forward();
+    if (!widget.disableAnimation) {
+      _slideAnimationController.forward();
+    }
   }
 
   _getOnTargetTap() {
     if (widget.disposeOnTap == true) {
       return widget.onTargetClick == null
           ? () {
-        ShowCaseWidget.of(context).dismiss();
+              ShowCaseWidget.of(context).dismiss();
             }
           : () {
-        ShowCaseWidget.of(context).dismiss();
+              ShowCaseWidget.of(context).dismiss();
               widget.onTargetClick();
             };
     } else {
@@ -207,10 +246,10 @@ class _ShowcaseState extends State<Showcase> with TickerProviderStateMixin {
     if (widget.disposeOnTap == true) {
       return widget.onToolTipClick == null
           ? () {
-        ShowCaseWidget.of(context).dismiss();
+              ShowCaseWidget.of(context).dismiss();
             }
           : () {
-        ShowCaseWidget.of(context).dismiss();
+              ShowCaseWidget.of(context).dismiss();
               widget.onToolTipClick();
             };
     } else {
@@ -271,6 +310,7 @@ class _ShowcaseState extends State<Showcase> with TickerProviderStateMixin {
               contentHeight: widget.height,
               contentWidth: widget.width,
               onTooltipTap: _getOnTooltipTap(),
+              contentPadding: widget.contentPadding,
             ),
           ],
         ),

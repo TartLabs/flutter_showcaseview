@@ -62,3 +62,6 @@ ios/Runner.xcworkspace/xcshareddata/
 #Vim
 *.swo
 *.swp
+example/ios/Flutter/flutter_export_environment.sh
+flutter_showcaseview.iml
+pubspec.lock
